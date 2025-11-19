@@ -45,11 +45,20 @@ def registracija_submit():
     if not geslo or len(geslo) < 6:
         return render_template("registracija.html", info_text = "Prekratko geslo, vsaj 6 znakov ali več")
         
-
+    
     insert_command = 'INSERT INTO contacts(first_name, last_name) VALUES("'+uporabnisko_ime+'", "'+geslo+'");'
     print(insert_command)
     conn = sqlite3.connect("test.db")
     cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM contacts WHERE first_name = ?", (uporabnisko_ime,))
+    existing_user = cursor.fetchone()
+    
+    if existing_user:
+        conn.close()
+        return render_template("registracija.html", info_text = "Username je že v uporabi")
+        
+    
     cursor.execute(insert_command)
     conn.commit()
     conn.close()
