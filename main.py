@@ -1,8 +1,9 @@
-from flask import Flask, request, render_template, redirect, make_response
+from flask import Flask, request, render_template, redirect, make_response, flash
 import sqlite3
 import os
 
 app = Flask(__name__)
+
 
 @app.route('/')
 def index():
@@ -40,6 +41,10 @@ def registracija():
 def registracija_submit():
     uporabnisko_ime = request.args.get("username")
     geslo = request.args.get("geslo")
+    
+    if not geslo or len(geslo) < 6:
+        return render_template("registracija.html", info_text = "Prekratko geslo, vsaj 6 znakov ali več")
+        
 
     insert_command = 'INSERT INTO contacts(first_name, last_name) VALUES("'+uporabnisko_ime+'", "'+geslo+'");'
     print(insert_command)
