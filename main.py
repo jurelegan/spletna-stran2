@@ -5,6 +5,7 @@ import os
 app = Flask(__name__)
 
 
+
 @app.route('/')
 def index():
     return render_template("index.html")
@@ -12,6 +13,18 @@ def index():
 @app.route('/prijava/')
 def prijava():
     return render_template("prijava.html")
+
+def preveri_uporabnika(uporabnisko_ime, geslo):
+    conn = sqlite3.connect("test.db")
+    cursor = conn.cursor()
+    query = 'SELECT * FROM contacts WHERE first_name="'+uporabnisko_ime+'" AND last_name="'+geslo+'"'
+    cursor.execute(query)
+    result = cursor.fetchone()
+    conn.close()
+    if result:
+        return True
+    else:
+        return False
 
 @app.route('/prijava-submit/')
 def prijava_submit():
@@ -29,6 +42,7 @@ def prijava_submit():
     if result:
         response = make_response(redirect("/main/"))
         response.set_cookie("username", uporabnisko_ime)
+        response.set_cookie("password", geslo)
         return response
     else:
         return render_template("prijava.html", info_text = "Prijava ni uspela")
@@ -51,7 +65,7 @@ def registracija_submit():
     conn = sqlite3.connect("test.db")
     cursor = conn.cursor()
     
-    cursor.execute("SELECT * FROM contacts WHERE first_name = ?", (uporabnisko_ime,))
+    cursor.execute(f"SELECT * FROM contacts WHERE first_name = '{uporabnisko_ime}'")
     existing_user = cursor.fetchone()
     
     if existing_user:
@@ -67,9 +81,13 @@ def registracija_submit():
 @app.route('/main/')
 def main():
     username = request.cookies.get("username")
+    password = request.cookies.get("password")
+    if not username or not password:
+            return redirect("/prijava")
     if not username:
         return redirect("/prijava/")
-
+    if not preveri_uporabnika(username, password):
+        return redirect("/prijava")
     conn = sqlite3.connect("test.db")
     cursor = conn.cursor()
     query = 'SELECT id, note_text FROM notes WHERE username="'+username+'";'
